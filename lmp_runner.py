@@ -170,6 +170,7 @@ def main():
         if code != 0:
             with open(not_all_results, 'a') as f:
                 f.write('* '*7 + '\n')
+            print('failed')
             continue
         get_params_log('tmp/' + fnames[idx][:-5] + '_out')
         get_params_data('tmp/{0}.100000.data'.format(fnames[idx]))
@@ -184,3 +185,5 @@ if __name__ == '__main__':
     subprocess.call(['mkdir', 'tmp'])
 
     main()
+
+    subprocess.call(['cp', 'tmp/not_all_results', 'not_all_results'])

@@ -263,10 +263,10 @@ def make_ff_series(input_fname='pyr_111.data', data_folder='data_adjusting'):
 
     """
 
-    eps_s1 = [0.01, 0.1, 1, 10, 100, 1000]
-    eps_s2 = [0.01, 0.1, 1, 10, 100, 1000]
-    sig_s1 = [6]#[r for r in range(1, 11, 1)]
-    sig_s2 = [6]#[r for r in range(1, 11, 1)]
+    eps_s1 = [12]
+    eps_s2 = [15, 16, 17, 18, 19, 20, 21]
+    sig_s1 = [2.5, 3, 3.5, 4, 4.5, 5]
+    sig_s2 = [2.5, 3, 3.5, 4, 4.5, 5]
 
 
 
