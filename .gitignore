@@ -1,0 +1,8 @@
+data_adjusting
+tmp
+*.png
+*.data
+*__pycache__*
+
+estimates
+not_all_results_tmp

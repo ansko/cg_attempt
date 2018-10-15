@@ -1,3 +1,6 @@
+import os
+import pprint
+pprint=pprint.PrettyPrinter(indent=4).pprint
 import shutil
 import subprocess
 
@@ -17,12 +20,12 @@ defaults = {
 }
 
 
-def plot():
+def call_gnuplot(task=None):
     subprocess.call('./plotter_fits.gnu')
     subprocess.call('./plotter_slice.gnu')
 
 
-def check_all():
+def get_badnesses():
     shutil.copyfile('tmp/not_all_results', './{0}'.format(not_all_results))
 
     all_badnesses = []
@@ -67,45 +70,19 @@ def check_all():
         print('best is:', min(all_badnesses),
               'in', lines[all_badnesses.index(min(all_badnesses))].split()[0],
               'with idx', all_badnesses.index(min(all_badnesses)))
+    return collected_data
 
-    # profiling:
+
+def explore_all(data):
     idxs = { 'e1': 1, 's1': 2, 'e2': 3, 's2': 4 }
-    """
-    for param in ['e1', 'e2', 's1', 's2']:
+    all_params = ['e1', 'e2', 's1', 's2']
+    for param in all_params:
         vals = {}
-        for entry in collected_data:
-            param_val = entry['structure'].split('_')[idxs[param]]
-            epot = entry['epot']
-            vals[param_val] = epot
-        with open('last_fit_{0}'.format(param), 'w') as f:
-            f.write('{0}\tEpot\n'.format(param))
-            for k in sorted(vals.keys()):
-                f.write('{0}\t{1}\n'.format(k, vals[k]))
-
-    for param in ['e1', 'e2', 's1', 's2']:
-        vals = {}
-        for entry in collected_data:
-            param_val = entry['structure'].split('_')[idxs[param]]
-            epot = entry['epot']
-            if param_val in vals.keys():
-                vals[param_val].append(epot)
-            else:
-                vals[param_val] = [epot]
-        with open('all_fit_{0}'.format(param), 'w') as f:
-            f.write('{0}\tEpot\n'.format(param))
-            for k in sorted(vals.keys()):
-                for v in vals[k]:
-                    f.write('{0}\t{1}\n'.format(k, v))
-    """
-    print('found', len(collected_data), 'entries')
-
-    for param in ['e1', 'e2', 's1', 's2']:
-        vals = {}
-        for entry in collected_data:
+        for entry in data:
             param_val = float(entry['structure'].split('_')[idxs[param]])
-            bandess = float(entry['badness'])
+            badness = float(entry['badness'])
             if param_val in vals.keys():
-                vals[param_val].append(bandess)
+                vals[param_val].append(badness)
             else:
                 vals[param_val] = [badness]
         with open('ave_fit_{0}'.format(param), 'w') as f:
@@ -113,20 +90,23 @@ def check_all():
             for k in sorted(vals.keys()):
                 f.write('{0}\t{1}\n'.format(k, sum(vals[k]) / len(vals[k])))
 
-    # slices
-    idx = all_badnesses.index(min(all_badnesses))
+
+def explore_minima_sections(data):
+    idxs = { 'e1': 1, 's1': 2, 'e2': 3, 's2': 4 }
+    minimal_badness = min(entry['badness'] for entry in data)
+    min_idx = [i for i, v in enumerate(data)
+        if data[i]['badness'] == minimal_badness][0]
     all_params = ['e1', 'e2', 's1', 's2']
     param_min_vals = {}
     for param in all_params:
         param_min_vals[param] = float(
-            entry['structure'].split('_')[idxs[param]])
-
+            data[min_idx]['structure'].split('_')[idxs[param]])
     for param in all_params:
         vals = {}
         other_param_vals = {
             k: param_min_vals[k] for k in set(all_params) - set([param])
         }
-        for entry in collected_data:
+        for entry in data:
             is_in_slice = True
             for k in other_param_vals.keys():
                 entry_param = float(entry['structure'].split('_')[idxs[k]])
@@ -138,9 +118,9 @@ def check_all():
                 continue
 
             param_val = float(entry['structure'].split('_')[idxs[param]])
-            bandess = float(entry['badness'])
+            badness = float(entry['badness'])
             if param_val in vals.keys():
-                vals[param_val].append(bandess)
+                vals[param_val].append(badness)
             else:
                 vals[param_val] = [badness]
 
@@ -149,8 +129,14 @@ def check_all():
             for k in sorted(vals.keys()):
                 f.write('{0}\t{1}\n'.format(k, sum(vals[k]) / len(vals[k])))
 
-    plot()
-
 
 if __name__ == '__main__':
-    check_all()
+    #check_all()
+    data = get_badnesses()
+    explore_all(data)
+    explore_minima_sections(data)
+    call_gnuplot()
+    cwd = os.getcwd()
+    for fname in os.listdir():
+        if fname.startswith('ave_fit_') or fname.startswith('slice_'):
+            os.remove(fname)
